@@ -14,6 +14,8 @@ public class Location {
         private String country;
         private String countrycode;
         private String state;
+        private String osm_key;
+        private String osm_value;
     }
     
     @Data

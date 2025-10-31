@@ -300,24 +300,115 @@ public class LocationSearchAppGUI extends JFrame {
         }
     }
 
-    private static class LocationListRenderer extends DefaultListCellRenderer {
-        @Override
-        public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-                                                     boolean isSelected, boolean cellHasFocus) {
-            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            if (value instanceof Location.Hit) {
-                Location.Hit hit = (Location.Hit) value;
-                String text = String.format("<html><b>%s</b><br/>%s, %s<br/><small>%.6f, %.6f</small></html>",
-                    hit.getName(),
-                    hit.getState() != null ? hit.getState() : "",
-                    hit.getCountry(),
-                    hit.getPoint().getLat(),
-                    hit.getPoint().getLng());
-                setText(text);
+private static class LocationListRenderer extends DefaultListCellRenderer {
+    @Override
+    public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                 boolean isSelected, boolean cellHasFocus) {
+        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (value instanceof Location.Hit) {
+            Location.Hit hit = (Location.Hit) value;
+            
+            String osmInfo = formatOsmInfo(hit.getOsm_key(), hit.getOsm_value());
+            
+            String text = String.format("<html><b>%s</b><br/>%s, %s<br/><small>%.6f, %.6f</small>%s</html>",
+                hit.getName(),
+                hit.getState() != null ? hit.getState() : "",
+                hit.getCountry(),
+                hit.getPoint().getLat(),
+                hit.getPoint().getLng(),
+                osmInfo.isEmpty() ? "" : "<br/><small><i>" + osmInfo + "</i></small>");
+            setText(text);
+        }
+        return this;
+    }
+    
+    private String formatOsmInfo(String osmKey, String osmValue) {
+        if (osmKey == null && osmValue == null) {
+            return "";
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        
+        if (osmKey != null) {
+            String readableKey = getReadableOsmKey(osmKey);
+            sb.append(readableKey);
+        }
+        
+        if (osmValue != null && !osmValue.equals("yes")) {
+            String readableValue = getReadableOsmValue(osmValue);
+            if (sb.length() > 0) {
+                sb.append(": ");
             }
-            return this;
+            sb.append(readableValue);
+        }
+        
+        return sb.toString();
+    }
+    
+    private String getReadableOsmKey(String osmKey) {
+        switch (osmKey) {
+            case "place": return "Место";
+            case "mountain_pass": return "Горный перевал";
+            case "tourism": return "Туризм";
+            case "amenity": return "Удобство";
+            case "shop": return "Магазин";
+            case "building": return "Здание";
+            case "natural": return "Природа";
+            case "waterway": return "Водный путь";
+            case "highway": return "Дорога";
+            case "railway": return "Железная дорога";
+            case "aeroway": return "Аэропорт";
+            case "leisure": return "Отдых";
+            case "historic": return "История";
+            case "boundary": return "Граница";
+            case "landuse": return "Землепользование";
+            default:
+                return capitalizeWords(osmKey.replace('_', ' '));
         }
     }
+    
+    private String getReadableOsmValue(String osmValue) {
+        switch (osmValue) {
+            case "hamlet": return "Деревня";
+            case "village": return "Село";
+            case "town": return "Городок";
+            case "city": return "Город";
+            case "suburb": return "Пригород";
+            case "quarter": return "Квартал";
+            case "neighbourhood": return "Район";
+            case "isolated_dwelling": return "Уединенное жилье";
+            case "farm": return "Ферма";
+            case "allotments": return "Участки";
+            case "commercial": return "Коммерческий";
+            case "industrial": return "Промышленный";
+            case "residential": return "Жилой";
+            case "retail": return "Торговый";
+            default:
+                return capitalizeWords(osmValue.replace('_', ' '));
+        }
+    }
+    
+    private String capitalizeWords(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+        
+        String[] words = text.split("\\s+");
+        StringBuilder result = new StringBuilder();
+        
+        for (String word : words) {
+            if (!word.isEmpty()) {
+                if (result.length() > 0) {
+                    result.append(" ");
+                }
+                result.append(Character.toUpperCase(word.charAt(0)))
+                      .append(word.substring(1).toLowerCase());
+            }
+        }
+        
+        return result.toString();
+    }
+}
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
@@ -332,5 +423,3 @@ public class LocationSearchAppGUI extends JFrame {
         });
     }
 }
-
-// btw i hate f***ng swing 

@@ -13,10 +13,9 @@ public class LocationTypeService {
     }
     
     public CompletableFuture<String> determineLocationType(double lat, double lon) {
-        return placesService.getPlaces(lat, lon, 500) // небольшой радиус
+        return placesService.getPlaces(lat, lon, 500)
                 .thenApply(places -> {
                     if (places != null && !places.isEmpty()) {
-                        // Берем тип самого близкого места
                         SimplePlace closestPlace = places.get(0);
                         if (closestPlace.getKinds() != null) {
                             String[] categories = closestPlace.getKinds().split(",");

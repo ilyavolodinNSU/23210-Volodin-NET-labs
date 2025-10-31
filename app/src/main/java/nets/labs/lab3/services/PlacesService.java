@@ -52,7 +52,7 @@ public class PlacesService {
                         places.stream()
                             .map(place -> {
                                 try {
-                                    Thread.sleep(0); 
+                                    Thread.sleep(200); 
                                 } catch (InterruptedException e) {
                                     Thread.currentThread().interrupt();
                                 }

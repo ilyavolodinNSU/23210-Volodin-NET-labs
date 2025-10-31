@@ -26,6 +26,8 @@ dependencies {
     runtimeOnly 'org.apache.logging.log4j:log4j-slf4j2-impl:2.23.1' // For SLF4J 2.x API
     runtimeOnly 'org.apache.logging.log4j:log4j-core:2.23.1' // Core Log4j 2 implementation
 
+    implementation 'dnsjava:dnsjava:2.1.1'
+
     // This dependency is used by the application.
     implementation libs.guava
 }
@@ -52,6 +54,6 @@ tasks.register('releaseJar', Jar) {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
     manifest {
-        attributes 'Main-Class': 'nets.labs.lab2.App'
+        attributes 'Main-Class': 'nets.labs.labaGrishi.Main'
     }
 }
