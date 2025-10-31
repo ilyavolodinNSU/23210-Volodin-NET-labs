@@ -6,7 +6,7 @@ public class AppConstants {
     public static final String ACCEPT_HEADER = "Accept";
     public static final String APPLICATION_JSON = "application/json";
     
-    public static final String GEOCODING_QUERY_PARAMS = "?q=%s&locale=%s&key=%s";
+    public static final String GEOCODING_QUERY_PARAMS = "?q=%s&locale=%s&limit=10&key=%s";
     public static final String PLACES_RADIUS_PARAMS = "/%s/places/radius?radius=%d&lon=%f&lat=%f&format=json&limit=%d&apikey=%s";
     public static final String PLACES_DETAILS_PARAMS = "/%s/places/xid/%s?apikey=%s";
     public static final String WEATHER_PARAMS = "?lat=%f&lon=%f&appid=%s&units=%s";

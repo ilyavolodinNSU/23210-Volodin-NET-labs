@@ -1,4 +1,4 @@
-package nets.labs.lab2;
+package nets.labs.lab2.client;
 
 import java.io.*;
 import java.net.*;

@@ -49,6 +49,7 @@ public class LocationSearchAppGUI extends JFrame {
         setSize(900, 600);
         setLocationRelativeTo(null);
 
+
         JPanel contentPanel = new JPanel(new BorderLayout(10, 10));
         contentPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
         contentPanel.add(createSearchPanel(), BorderLayout.NORTH);
