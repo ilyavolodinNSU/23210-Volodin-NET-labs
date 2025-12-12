@@ -14,6 +14,7 @@ import java.nio.channels.SocketChannel;
 public class Socks5HandshakeHandler implements Handler {
     private final SocketChannel client;
     private final DNSResolver resolver;
+    private final CredentialValidator validator;
 
     private static final Logger logger = LogManager.getLogger(Socks5HandshakeHandler.class);
     
@@ -21,8 +22,11 @@ public class Socks5HandshakeHandler implements Handler {
     private ByteBuffer buffer = ByteBuffer.allocate(BUFSIZE);
     private final byte VERSION = 0x05;
     private final byte NO_AUTH = 0x00;
+    private final byte USERNAME_PASSWORD = 0x02;
     private static final byte NO_ACCEPTABLE_METHODS = (byte) 0xFF;
-    private final byte[] SUCCESS = {VERSION, NO_AUTH};
+    
+    // Изменен ответ на рукопожатие - теперь только USERNAME_PASSWORD метод
+    private final byte[] SUCCESS_RESPONSE = {VERSION, USERNAME_PASSWORD};
 
     @Override
     public void handle(SelectionKey key) throws Exception {
@@ -52,43 +56,48 @@ public class Socks5HandshakeHandler implements Handler {
         }
         
         byte version = buffer.get();
-        if (version != 0x05) {
+        if (version != VERSION) {
             logger.warn("Неверная версия SOCKS: {}", version);
             sendReplyAndClose(key, NO_ACCEPTABLE_METHODS);
             return;
         }
         
-        int nmethods = buffer.get();
+        int nmethods = buffer.get() & 0xFF; // Беззнаковое чтение
         if (buffer.remaining() < nmethods) {
             logger.debug("Недостаточно методов аутентификации, ожидание");
             buffer.compact();
             return;
         }
 
-        boolean hasNoAuth = false;
+        boolean supportsUsernamePassword = false;
         int methodsRead = 0;
         while (methodsRead < nmethods) {
-            if (buffer.get() == 0x00) {
-                hasNoAuth = true;
+            byte method = buffer.get();
+            if (method == USERNAME_PASSWORD) {
+                supportsUsernamePassword = true;
+                logger.debug("Клиент поддерживает USERNAME/PASSWORD аутентификацию");
             }
             methodsRead++;
         }
 
-        if (!hasNoAuth) {
-            logger.warn("Нет приемлемых методов аутентификации");
+        if (!supportsUsernamePassword) {
+            logger.warn("Клиент не поддерживает USERNAME/PASSWORD аутентификацию");
             sendReplyAndClose(key, NO_ACCEPTABLE_METHODS);
             return;
         }
 
-        logger.debug("Успешное рукопожатие, выбран метод аутентификации: NO_AUTH");
+        logger.debug("Запрошена USERNAME/PASSWORD аутентификация");
         
-        if (client.write(ByteBuffer.wrap(SUCCESS)) <= 0) {
+        // Отправляем клиенту, что выбрали USERNAME/PASSWORD метод
+        if (client.write(ByteBuffer.wrap(SUCCESS_RESPONSE)) <= 0) {
             logger.warn("Не удалось отправить ответ на рукопожатие");
             closeConnection(key);
+            return;
         }
 
-        key.attach(new ConnectionHandler(client, key.selector(), resolver));
-        logger.debug("Переход к этапу соединения");
+        // Переключаемся на обработчик аутентификации
+        key.attach(new Socks5AuthHandler(client, validator, resolver));
+        logger.debug("Переход к этапу аутентификации");
         buffer.clear();
     }
 

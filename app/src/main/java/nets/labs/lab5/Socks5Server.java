@@ -22,6 +22,7 @@ public class Socks5Server {
     private final int port;
     public static final ThreadLocal<ByteBuffer> TRANSFER_BUFFER = ThreadLocal.withInitial(() -> ByteBuffer.allocateDirect(32768));
     private DNSResolver resolver;
+    private CredentialValidator validator;
     private volatile boolean isRun = true;
     private Selector selector;
 
@@ -33,7 +34,11 @@ public class Socks5Server {
         serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
         resolver = new DNSResolver(selector);
         
+        // Инициализируем валидатор (можно заменить на другой)
+        validator = new SimpleCredentialValidator();
+        
         logger.info("Сервер запущен и слушает на порту {}", port);
+        logger.info("Используется аутентификация USERNAME/PASSWORD");
         
         while (isRun) {
             int readyChannels = selector.select();
@@ -48,14 +53,14 @@ public class Socks5Server {
                         logger.debug("Ключ недействителен, пропускаем");
                         continue;
                     }
-
                     if (key.isAcceptable()) {
                         ServerSocketChannel server = (ServerSocketChannel) key.channel();
                         SocketChannel client = server.accept();
                         if (client == null) continue;
                         client.configureBlocking(false);
-                        // этот хендлер далее будет обрабатывать рукопожатие и всё остальное
-                        client.register(selector, SelectionKey.OP_READ, new Socks5HandshakeHandler(client, resolver));
+                        // Передаем валидатор в обработчик рукопожатия
+                        client.register(selector, SelectionKey.OP_READ, 
+                                    new Socks5HandshakeHandler(client, resolver, validator));
                         logger.info("Новый клиент подключился: {}", client.getRemoteAddress());
                     }
                     if (key.isConnectable()) {
